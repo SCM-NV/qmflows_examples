@@ -1,6 +1,6 @@
 from noodles import gather
-from qmworks import (Settings, adf, dftb, run, templates)
-from qmworks.molkit import from_smiles
+from qmflows import (Settings, adf, dftb, run, templates)
+from qmflows.molkit import from_smiles
 
 # List of Molecules to simulate
 smiles = [
@@ -13,7 +13,7 @@ smiles = [
         'C1C=CC=CC=C1'
 ]
 
-# transform the string into a format understandable by QMWorks
+# transform the string into a format understandable by Qmflows
 molecules = map(from_smiles, smiles)
 
 # Used DFTB to optimize the geometries
@@ -23,7 +23,7 @@ optimized_mols = [job.molecule for job in dftb_jobs]
 # Settings for ADF
 s = Settings()
 s.basis = 'DZP'
-s.functional = 'B3LYP'
+s.functional = 'b3lyp'
 s.specific.adf.scf.converge = 1e-6
 s.specific.adf.symmetry = 'nosym'
 
