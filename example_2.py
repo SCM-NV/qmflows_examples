@@ -1,6 +1,8 @@
 from noodles import gather
+from scheduled_functions import filter_homo_lumo_lower_than
 from qmflows import (Settings, adf, dftb, run, templates)
 from qmflows.molkit import from_smiles
+
 
 # List of Molecules to simulate
 smiles = {'naphthalene': 'C1=CC2=C(C=C1)C=CC=C2',
@@ -14,7 +16,7 @@ smiles = {'naphthalene': 'C1=CC2=C(C=C1)C=CC=C2',
 molecules = {name: from_smiles(smile) for name, smile in smiles.items()}
 
 # Used DFTB to optimize the geometries
-dftb_jobs = {name: dftb(templates.geometry, mol, name='dftb_{}'.format(name))
+dftb_jobs = {name: dftb(templates.geometry, mol, job_name='dftb_{}'.format(name))
              for name, mol in molecules.items()}
 optimized_mols = {name: job.molecule for name, job in dftb_jobs.items()}
 
@@ -26,19 +28,12 @@ s.specific.adf.scf.converge = 1e-6
 s.specific.adf.symmetry = 'nosym'
 
 # Compute the single point calculation
-singlepoints = {name: adf(s, mol, name='adf_{}'.format(name))
-                for name, mol in optimized_mols.items()}
+singlepoints = [adf(s, mol, job_name='adf_{}'.format(name))
+                for name, mol in optimized_mols.items()]
 
-# Extract the HOMO-LUMO values
-homos_lumos = {name: gather(sp.homo, sp.lumo)
-               for name, sp in singlepoints.items()}
+# Filter results with HOMO-LUMO gap lower than 3 eV
+interesting = filter_homo_lumo_lower_than(gather(*singlepoints), 3)
 
 # Run the computation
-results = run(gather(**homos_lumos))
-
-# Compute the Gap
+results = run(interesting)
 print(results)
-# gaps = [(lumo - homo) * 27.21 for homo, lumo in results]
-
-
-# print("HOMO-LUMO gap (eV)", gaps)
