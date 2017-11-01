@@ -9,9 +9,8 @@ to initialize a TS optimization in another, i.e. Orca in this case
 from qmflows import (
     orca, dftb, templates, molkit, Dihedral, run, Settings)
 
-
-# Generate 2-Hydroxy-biphenyl molecule
-mol = molkit.from_smiles('c1ccccc1c2ccccc2O')
+# Generate 2-Methyl-biphenyl molecule
+mol = molkit.from_smiles('c1ccccc1c2ccccc2C')
 
 # Define dihedral angle
 dihe = Dihedral(1, 6, 7, 12)
@@ -29,13 +28,14 @@ dftb_freq = dftb(templates.freq, dftb_opt.molecule)
 s2 = Settings()
 s2.inithess = dftb_freq.hessian
 orca_ts = orca(templates.ts.overlay(s2), dftb_opt.molecule)
+orca_freq = orca(templates.freq, orca_ts.molecule)
 
 # Execute the workflow
-result = run(orca_ts)
+result = run(orca_freq)
 
 # Analyse the result
 ts_dihe = round(dihe.get_current_value(result.molecule))
-n_optcycles = result.optcycles
+frequencies = [f for f in result.frequencies if f != 0.0]
 
 print('Dihedral angle (degrees): {:.0f}'.format(ts_dihe))
-print('Number of optimization cycles: {:d}'.format(n_optcycles))
+print('Three lowest frequencies: ', frequencies[:3])
