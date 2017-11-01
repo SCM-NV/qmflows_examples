@@ -1,7 +1,7 @@
 """
-This example generates an approximate TS for rotation in hydrogen peroxide
+This example generates an approximate TS for rotation in 2-methyl-biphenyl
 using DFTB, and performs a full TS optimization in Orca.
-It illustrates using a hessian from one package, DFTB in this case,
+It illustrates the use of a hessian from one package, DFTB in this case,
 to initialize a TS optimization in another, i.e. Orca in this case
 """
 
@@ -35,7 +35,7 @@ result = run(orca_freq)
 
 # Analyse the result
 ts_dihe = round(dihe.get_current_value(result.molecule))
-frequencies = [f for f in result.frequencies if f != 0.0]
+frequencies = [f for f in result.frequencies if abs(f) > 1e-3]
 
 print('Dihedral angle (degrees): {:.0f}'.format(ts_dihe))
 print('Three lowest frequencies: ', frequencies[:3])

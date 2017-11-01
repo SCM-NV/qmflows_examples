@@ -1,7 +1,20 @@
-from noodles import gather
-from scheduled_functions import filter_homo_lumo_lower_than
+from noodles import (gather, schedule)
 from qmflows import (Settings, adf, dftb, run, templates)
 from qmflows.molkit import from_smiles
+from scipy.constants import physical_constants
+
+eV = physical_constants['electron volt-hartree relationship'][0]
+
+
+def filter_homo_lumo_lower_than(jobs, x):
+    """
+    Filter the `jobs` that fulfill that the HOMO-LUMO gap
+    is lower than x
+    """
+    interesting = [(j.job_name, (j.lumo - j.homo) / eV) for
+                   j in jobs if (j.lumo - j.homo) / eV < x]
+
+    return interesting
 
 
 # List of Molecules to simulate
@@ -32,7 +45,8 @@ singlepoints = [adf(s, mol, job_name='adf_{}'.format(name))
                 for name, mol in optimized_mols.items()]
 
 # Filter results with HOMO-LUMO gap lower than 3 eV
-interesting = filter_homo_lumo_lower_than(gather(*singlepoints), 3)
+filter_schedule = schedule(filter_homo_lumo_lower_than)
+interesting = filter_schedule(gather(*singlepoints), 3)
 
 # Run the computation
 results = run(interesting)
