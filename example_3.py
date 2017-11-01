@@ -10,17 +10,17 @@ from qmflows import (
     orca, dftb, templates, molkit, Dihedral, run, Settings)
 
 
-# Generate hydrogen peroxide molecule
-h2o2 = molkit.from_smarts('C1(=CC=CC=C1C2=C(C=CC=C2)C)O')
+# Generate 2-Hydroxy-biphenyl molecule
+mol = molkit.from_smiles('c1ccccc1c2ccccc2O')
 
 # Define dihedral angle
-dihe = Dihedral(1, 2, 3, 4)
+dihe = Dihedral(1, 6, 7, 12)
 
 # Constrained geometry optimization with DFTB
 # The dihedral is set to 0.0 to obtain an approximate TS
 s1 = Settings()
 s1.constraint.update(dihe.get_settings(0.0))
-dftb_opt = dftb(templates.geometry.overlay(s1), h2o2)
+dftb_opt = dftb(templates.geometry.overlay(s1), mol)
 
 # Calculate the DFTB hessian
 dftb_freq = dftb(templates.freq, dftb_opt.molecule)
