@@ -1,20 +1,20 @@
 from noodles import (gather, schedule)
-from plams import Molecule
-from qmworks import (adf, dftb, orca, run, templates)
+from qmflows import (adf, dftb, orca, run, templates)
+from scm.plams import Molecule
 import os
 
-# skip DFTB preoptimization in case DFTB fails
+@schedule
 def skip_dftb(job, mol):
     """
     return optimized molecule in case of successful otherwise
-    used unoptimized molecule.
+    used default geometry.
     """
     if job.status not in ['failed', 'crashed']:
         mol = job.molecule
     return mol
 
 # Create Molecule object from xyz coordinates
-path  = 'files/byphenyls/'
+path  = 'files/biphenyls/'
 content = os.listdir(path)
 files = [os.path.join(path, f) for f in content]
 names = [os.path.splitext(f)[0] for f in content]
@@ -26,14 +26,14 @@ dftb_jobs = {
     for n, mol in molecules.items()}
 
 # Check preoptimized molecules
-schedule_skip = schedule(skip_dftb)
 opt_mols = {
-    n: schedule_skip(job, molecules[n]) for n, job in dftb_jobs.items()}
+    n: skip_dftb(job, molecules[n]) for n, job in dftb_jobs.items()}
 
 # DFT optimization with Orca
 s = templates.geometry
 s.functional = 'BP86'
-s.basis = 'TZV(P)'
+s.basis = 'def2TZVP'
+s.specific.orca.pal.nprocs = 16
 dft_jobs = {n: orca(s, mol, job_name='orca_{}'.format(n)) for n, mol in opt_mols.items()}
 
 # TD-DFT ADF with COSMO
@@ -44,7 +44,7 @@ s.specific.adf.Solvation.solvent = 'name=Dichloromethane emp=0.0 neql=2.028'
 
 td_dft_jobs = {n: adf(s, mol, job_name='td_dft_{}'.format(n)) for n, mol in dft_jobs.items()}
 
-energies = [(n, j.energy) for n, j in td_dft_jobs.items()]
+energies = [gather(n, j.energy) for n, j in td_dft_jobs.items()]
 
 result = run(gather(*energies), folder='biphenyl')
 
