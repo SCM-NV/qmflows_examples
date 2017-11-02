@@ -6,6 +6,7 @@ from scipy.constants import physical_constants
 eV = physical_constants['electron volt-hartree relationship'][0]
 
 
+@schedule
 def filter_homo_lumo_lower_than(jobs, x):
     """
     Filter the `jobs` that fulfill that the HOMO-LUMO gap
@@ -45,9 +46,8 @@ singlepoints = [adf(s, mol, job_name='adf_{}'.format(name))
                 for name, mol in optimized_mols.items()]
 
 # Filter results with HOMO-LUMO gap lower than 3 eV
-filter_schedule = schedule(filter_homo_lumo_lower_than)
-interesting = filter_schedule(gather(*singlepoints), 3)
+interesting = filter_homo_lumo_lower_than(gather(*singlepoints), 3)
 
 # Run the computation
-results = run(interesting)
+results = run(interesting, folder='screening')
 print(results)
