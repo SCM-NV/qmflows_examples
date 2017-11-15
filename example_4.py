@@ -33,7 +33,6 @@ opt_mols = {
 s = templates.geometry
 s.functional = 'BP86'
 s.basis = 'def2TZVP'
-s.specific.orca.pal.nprocs = 16
 dft_jobs = {n: orca(s, mol, job_name='orca_{}'.format(n)) for n, mol in opt_mols.items()}
 
 # TD-DFT ADF with COSMO
@@ -42,10 +41,12 @@ s.functional = 'camy-b3lyp'
 s.basis = 'TZ2P'
 s.specific.adf.Solvation.solvent = 'name=Dichloromethane emp=0.0 neql=2.028'
 
-td_dft_jobs = {n: adf(s, mol, job_name='td_dft_{}'.format(n)) for n, mol in dft_jobs.items()}
+td_dft_jobs = {
+    n: adf(s, job.molecule, job_name='td_dft_{}'.format(n))
+    for n, job in dft_jobs.items()}
 
 energies = [gather(n, j.energy) for n, j in td_dft_jobs.items()]
 
-result = run(gather(*energies), folder='biphenyl')
+result = run(gather(*energies), n_processes=4, folder='biphenyl')
 
 print(result)
