@@ -1,0 +1,36 @@
+digraph G {
+	rankdir=LR;
+	edge[arrowhead=vee, color=blue];
+        graph [ dpi = 300 ];
+	newrank=true;
+	compound=true;
+	subgraph clusterdist {
+	     node[style=filled, color=white, shape=octagon];
+	     edge[color=blue]
+	     mol[label="2-Methyl-biphenyl\nc1ccccc1c2ccccc2C"];
+	     cons[label="Constrain\nDihedral(1, 6, 7, 12) = 0"]
+
+	     dftb[label="Optimization:\nDFTB (ADF)"];
+	     freq1[label="Frequencies:\nDFTB (ADF)"];
+
+	     ts[label="Transition state\noptimization:\nDFT (Orca)"];
+
+	     freq2[label="Frequencies:\nDFT (Orca)"];
+	     r1[label="Dihedral\nangle", shape=box3d, color=cornflowerblue, style=filled];
+     	     r2[label="Numerical values\nfrequencies", shape=box3d, color=cornflowerblue, style=filled];
+
+	     mol -> dftb;
+	     cons -> dftb;
+
+	     dftb -> freq1;
+	     freq1 -> ts;
+	     ts -> freq2;
+	     freq2 -> r1;
+	     freq2 -> r2;
+
+	     style=filled;
+	     color=cornsilk;
+	     {rank=same dftb; freq1}
+	     {rank=same ts; freq2}
+	}
+} 

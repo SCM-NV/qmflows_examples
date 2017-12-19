@@ -1,0 +1,22 @@
+digraph G {
+	edge[arrowhead=vee]
+        graph [ dpi = 300 ];
+	newrank=true;
+	compound=true;
+	subgraph clusterdist {
+	     node[style=filled, color=white, shape=octagon];
+	     edge[color=blue]
+	     gi[label="Molecule"];
+	     dftb[label="Optimization:\nDFTB (ADF)"];
+	     dft[label="Optimization:\n DFT (ADF)"];
+	     es[label="Excited state\ngeometry optimization:\nCIS (Orca)"]
+	     rs[label="Output", shape=box3d, color=cornflowerblue, style=filled]	
+	     gi -> dftb;
+	     dftb -> dft;
+	     dft -> es;
+	     es -> rs;
+
+	     style=filled;
+	     color=cornsilk;
+	}
+} 

@@ -1,0 +1,48 @@
+
+digraph G {
+	rankdir=TB;
+	edge[arrowhead=vee, color=blue]
+        graph [ dpi = 300 ];
+	newrank=true;
+	compound=true;
+	subgraph clustermol {
+	     node[style=filled, color=white];
+          m1[label="naphthalene\nC1=CC2=C(C=C1)C=CC=C2"]
+          m2[label="azulene\nC1=CC2=CC=CC=CC2=C1"]
+          m3[label="cycloheptatriene\nC1=CC=C(C=C1)OC1=CC=CC=C1"]
+          m4[label="furaldehyde\nO=CC1=COC=C1"]
+          m5[label="methylthiophene\nCC1=C(C=CS1)C#C"]
+	  
+	  m1 -> m3 [style=invis];
+	  m2 -> m4 -> m5 [style=invis];
+	  m1 -> m2 [style=invis];
+          style=filled;
+          color=lightcyan1;
+	  {rank=same m1; m3}
+	  {rank=same m2; m4; m5} 	  
+	}
+	subgraph clustercalc {
+	     node[style=filled, color=white, shape=octagon];
+	     dftb[label="Optimization:\nDFTB (ADF)"];
+	     adf[label="HOMO-LUMO gap\ncalculation:\nDFT (ADF)"]
+	     filter[label="Filter molecules\nwith gap lower than 3eV"]
+
+	     dftb -> adf -> filter;
+
+             style=filled;
+	     color=cornsilk;
+	     {rank=same dftb; adf; filter}
+	}
+
+        r1[label="Azulene\n1.96eV", shape=box3d, color=cornflowerblue, style=filled]	
+        r2[label="Furaldehyde\n2.72eV", shape=box3d, color=cornflowerblue, style=filled]	
+
+	// m1 -> dftb [ltail=clustermol, lhead=clustercalc]
+	m2 -> dftb [ltail=clustermol, lhead=clustercalc]
+	// m3 -> dftb [ltail=clustermol, lhead=clustercalc]
+	// m4 -> dftb [ltail=clustermol, lhead=clustercalc]
+	// m5 -> dftb [ltail=clustermol, lhead=clustercalc]
+
+	adf -> r1 [ltail=clustercalc]
+	adf -> r2 [ltail=clustercalc]	
+} 
