@@ -7,16 +7,6 @@ import numpy as np
 
 eV = physical_constants['electron volt-hartree relationship'][0]
 
-def extract_tdfft_excitations(job):
-    """
-    Extract the excitation Energies for the `job`.
-    """
-    kf = KFReader(job.kf.path)
-    energies = np.array(kf.read('All excitations', 'All Sing-Sing excitations'))
-    
-    return energies / eV
-
-
 @schedule
 def filter_homo_lumo_lower_than(jobs, x):
     """
@@ -35,6 +25,17 @@ def iterate_over_jobs(promises, fun, inp, prop, prefix=None):
     return gather(*[fun(inp, getattr(job, prop),
                 job_name='{}_{}'.format(prefix, get_job_name(job)))
             for job in promises])
+
+
+def extract_tdfft_excitations(job):
+    """
+    Extract the excitation Energies for the `job` using the KF binary
+    file from ADF.
+    """
+    kf = KFReader(job.kf.path)
+    energies = np.array(kf.read('All excitations', 'All Sing-Sing excitations'))
+    
+    return energies / eV
 
 
 def get_job_name(job):
