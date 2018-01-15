@@ -2,8 +2,20 @@ from noodles import (gather, lift, schedule)
 from qmflows import (Settings, adf, dftb, run, templates)
 from qmflows.molkit import from_smiles
 from scipy.constants import physical_constants
+from scm.plams import KFReader
+import numpy as np
 
 eV = physical_constants['electron volt-hartree relationship'][0]
+
+def extract_tdfft_excitations(job):
+    """
+    Extract the excitation Energies for the `job`.
+    """
+    kf = KFReader(job.kf.path)
+    energies = np.array(kf.read('All excitations', 'All Sing-Sing excitations'))
+    
+    return energies / eV
+
 
 @schedule
 def filter_homo_lumo_lower_than(jobs, x):
@@ -77,11 +89,15 @@ s.specific.adf.excitations.lowest = 10
 
 td_dft_jobs = iterate_over_jobs(opt_jobs, adf, s, 'molecule', prefix='tddft')
 
-# Filter again the candidates
+# Filter The optimize molecules based on TD-DFT
 candidates_td_dft = filter_homo_lumo_lower_than(td_dft_jobs, 3)
 
 # Run the computation
 results = run(candidates_td_dft, folder='screening')
 for r in results:
-    print(r.job_name, (r.lumo - r.homo) / eV)
+    excitations  = extract_tdfft_excitations(r)
+    print('Molecule: ', get_job_name(r))
+    print('Excitations (eV):\n', np.array2string(excitations, precision=2))
+
+
 
