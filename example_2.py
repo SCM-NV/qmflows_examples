@@ -1,10 +1,9 @@
-from noodles import (gather, schedule)
+from noodles import (gather, lift, schedule)
 from qmflows import (Settings, adf, dftb, run, templates)
 from qmflows.molkit import from_smiles
 from scipy.constants import physical_constants
 
 eV = physical_constants['electron volt-hartree relationship'][0]
-
 
 @schedule
 def filter_homo_lumo_lower_than(jobs, x):
@@ -12,10 +11,24 @@ def filter_homo_lumo_lower_than(jobs, x):
     Filter the `jobs` that fulfill that the HOMO-LUMO gap
     is lower than x
     """
-    interesting = [(j.job_name, (j.lumo - j.homo) / eV) for
-                   j in jobs if (j.lumo - j.homo) / eV < x]
+    return [j for j in jobs if (j.lumo - j.homo) / eV < x]
 
-    return interesting
+
+@schedule
+def iterate_over_jobs(promises, fun, inp, prop, prefix=None):
+    """
+    Iterate over a list of `promised` jobs, calling function `fun`
+    with input `inp` and property `prop` from previous jobs.
+    """
+    return gather(*[fun(inp, getattr(job, prop),
+                job_name='{}_{}'.format(prefix, get_job_name(job)))
+            for job in promises])
+
+
+def get_job_name(job):
+    """get the base job name"""
+    name = job.job_name
+    return name.split('_')[1]
 
 
 # List of Molecules to simulate
@@ -34,10 +47,11 @@ dftb_jobs = {name: dftb(templates.geometry, mol, job_name='dftb_{}'.format(name)
              for name, mol in molecules.items()}
 optimized_mols = {name: job.molecule for name, job in dftb_jobs.items()}
 
-# Settings for ADF
+# Settings for ADF SAOP single point calculation
 s = Settings()
 s.basis = 'DZP'
-s.functional = 'pbe'
+s.specific.adf.basis.core = None
+s.specific.adf.xc.model = 'saop'
 s.specific.adf.scf.converge = 1e-6
 s.specific.adf.symmetry = 'nosym'
 
@@ -46,8 +60,28 @@ singlepoints = [adf(s, mol, job_name='adf_{}'.format(name))
                 for name, mol in optimized_mols.items()]
 
 # Filter results with HOMO-LUMO gap lower than 3 eV
-interesting = filter_homo_lumo_lower_than(gather(*singlepoints), 3)
+candidates = filter_homo_lumo_lower_than(gather(*singlepoints), 3)
+
+# Optimize the selected candidates
+inp = templates.geometry
+inp.functional = 'pbe'
+inp.basis = 'DZP'
+inp.specific.adf.scf.converge = 1e-6
+inp.specific.adf.symmetry = 'nosym'
+
+opt_jobs = iterate_over_jobs(candidates, adf, inp, 'molecule', prefix='pbe')
+
+# Single point TD-DFT calculations
+s.specific.adf.excitations.allowed = ''
+s.specific.adf.excitations.lowest = 10
+
+td_dft_jobs = iterate_over_jobs(opt_jobs, adf, s, 'molecule', prefix='tddft')
+
+# Filter again the candidates
+candidates_td_dft = filter_homo_lumo_lower_than(td_dft_jobs, 3)
 
 # Run the computation
-results = run(interesting, folder='screening')
-print(results)
+results = run(candidates_td_dft, folder='screening')
+for r in results:
+    print(r.job_name, (r.lumo - r.homo) / eV)
+
