@@ -17,7 +17,7 @@ adf_opt = adf(inp, dftb_opt.molecule)
 # single point calculation using EOMS-CCSD
 ccsd = Settings()
 ccsd.specific.orca.mdci.nroots = 10
-ccsd.specific.orca.main = 'Pal4 RHF EOM-CCSD def2-TZVP tightscf'
+ccsd.specific.orca.main = 'RHF EOM-CCSD def2-TZVP tightscf'
 
 orca_ccsd = orca(ccsd, adf_opt.molecule, job_name='ccsd')
 
