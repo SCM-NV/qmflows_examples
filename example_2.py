@@ -17,12 +17,12 @@ def filter_homo_lumo_lower_than(jobs, x):
 
 
 @schedule
-def iterate_over_jobs(promises, fun, inp, prop, prefix=None):
+def iterate_over_jobs(promises, inp, prefix=None):
     """
-    Iterate over a list of `promised` jobs, calling function `fun`
-    with input `inp` and property `prop` from previous jobs.
+    Iterate over a list of `promised` jobs, calling adf
+    with input `inp` and the molecular geometry from previous jobs.
     """
-    return gather(*[fun(inp, getattr(job, prop),
+    return gather(*[adf(inp, job.molecule,
                 job_name='{}_{}'.format(prefix, get_job_name(job)))
             for job in promises])
 
@@ -68,7 +68,7 @@ s.specific.adf.xc.model = 'saop'
 s.specific.adf.scf.converge = 1e-6
 s.specific.adf.symmetry = 'nosym'
 
-# Compute the single point calculation
+# single point calculations using the SAOP functional
 singlepoints = [adf(s, mol, job_name='adf_{}'.format(name))
                 for name, mol in optimized_mols.items()]
 
@@ -82,13 +82,15 @@ inp.basis = 'DZP'
 inp.specific.adf.scf.converge = 1e-6
 inp.specific.adf.symmetry = 'nosym'
 
-opt_jobs = iterate_over_jobs(candidates, adf, inp, 'molecule', prefix='pbe')
+# Optimize only the filter candidates
+opt_jobs = iterate_over_jobs(candidates, inp, prefix='pbe')
 
 # Single point TD-DFT calculations
 s.specific.adf.excitations.allowed = ''
 s.specific.adf.excitations.lowest = 10
 
-td_dft_jobs = iterate_over_jobs(opt_jobs, adf, s, 'molecule', prefix='tddft')
+# Use PBE optimization optimized molecule
+td_dft_jobs = iterate_over_jobs(opt_jobs, s, prefix='tddft')
 
 # Filter The optimize molecules based on TD-DFT
 candidates_td_dft = filter_homo_lumo_lower_than(td_dft_jobs, 3)
