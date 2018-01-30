@@ -1,26 +1,30 @@
 digraph G {
-	rankdir=LR;
+	// rankdir=LR;
 	edge[arrowhead=vee, color=blue];
         graph [ dpi = 300 ];
 	newrank=true;
 	compound=true;
-	subgraph clusterdist {
+	subgraph clusterinp{
 	     node[style=filled, color=white, shape=octagon];
 	     edge[color=blue]
 	     mol[label="2-Methyl-biphenyl\nc1ccccc1c2ccccc2C"];
 	     cons[label="Constrain\nDihedral(1, 6, 7, 12) = 0"]
-
+	     style=filled;
+	     color=lightcyan1;
+		}
+	
+		subgraph clusterdist {
+	     node[style=filled, color=white, shape=octagon];
+	     edge[color=blue]
+			
 	     dftb[label="Optimization:\nDFTB (ADF)"];
 	     freq1[label="Frequencies:\nDFTB (ADF)"];
 
-	     ts[label="Transition state\noptimization:\nDFT (Orca)"];
+	     ts[label="TS optimization:\nDFT/LDA (Orca)"];
 
-	     freq2[label="Frequencies:\nDFT (Orca)"];
+	     freq2[label="Frequencies:\nDFT/LDA (Orca)"];
 	     r1[label="Dihedral\nangle", shape=box3d, color=cornflowerblue, style=filled];
      	     r2[label="Numerical values\nfrequencies", shape=box3d, color=cornflowerblue, style=filled];
-
-	     mol -> dftb;
-	     cons -> dftb;
 
 	     dftb -> freq1;
 	     freq1 -> ts;
@@ -30,7 +34,11 @@ digraph G {
 
 	     style=filled;
 	     color=cornsilk;
-	     {rank=same dftb; freq1}
-	     {rank=same ts; freq2}
-	}
+	     // {rank=same dftb; mol} 
+	     // {rank=same ts; freq2}
+     }
+     mol -> dftb;
+     cons -> dftb;
+     
+     
 } 
